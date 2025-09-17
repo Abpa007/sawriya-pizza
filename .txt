@@ -1,0 +1,64 @@
+import dbConnect from '@/lib/database';
+import Product from '@/lib/models/product';
+import MenuCard from '@/components/menu-card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
+// Fetch menu data directly from the database
+async function getMenu() {
+  await dbConnect();
+  try {
+    const products = await Product.find({});
+    // Convert Mongoose documents to plain objects to avoid serialization errors
+    return products.map(product => product.toObject({ getters: true }));
+  } catch (error) {
+    throw new Error('Failed to fetch menu items from the database.');
+  }
+}
+
+export async function MenuSection() {
+  let products;
+  try {
+    products = await getMenu();
+  } catch (error) {
+    // Graceful error display if data fetching fails
+    return (
+      <section className="py-16 text-center">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-red-500 mb-4">Error Loading Menu</h2>
+          <p className="text-muted-foreground">We apologize, but we could not load the menu at this time. Please try again later.</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-16 bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <h2 className="font-playfair font-bold text-3xl md:text-4xl text-foreground dark:text-white mb-2">
+            Our Delicious Menu
+          </h2>
+          <p className="text-muted-foreground dark:text-gray-300 text-lg max-w-2xl mx-auto">
+            Explore our carefully crafted selection of authentic Indian pizzas, appetizers, and more.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {products.map((product: any) => (
+            <MenuCard key={product._id} item={product} />
+          ))}
+        </div>
+
+        <div className="mt-12 text-center">
+          <Link href="/menu" passHref>
+            <Button size="lg" className="bg-primary dark:bg-orange-400 hover:bg-primary/90 dark:hover:bg-orange-500">
+              View Full Menu
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
